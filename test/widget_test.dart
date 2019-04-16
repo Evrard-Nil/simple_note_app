@@ -11,20 +11,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:notes_app/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('Home page displays', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(MyApp());
+    await tester.pumpWidget(Notes());
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
+    // Verify appbar displays anything
+    expect(find.text('Notes'), findsOneWidget);
+    // Verify notes empty
+    expect(find.text('Empty note list'), findsOneWidget);
+    // Tap the FAB to create a note
     await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.pumpAndSettle();
+    // Type text
+    await tester.enterText(find.text('Enter your note'), 'Lorem ipsum ...');
+    // Save
+    await tester.tap(find.byIcon(Icons.done));
+    // Check note appear
+    await tester.pumpAndSettle();
+    expect(find.text('Empty note list'), findsNothing);
+    expect(find.text('Lorem ipsum ...'), findsOneWidget);
   });
 }
