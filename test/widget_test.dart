@@ -11,7 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:notes_app/main.dart';
 
 void main() {
-  testWidgets('Home page displays', (WidgetTester tester) async {
+  testWidgets('Add note', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(Notes());
     await tester.pumpAndSettle();
@@ -21,10 +21,12 @@ void main() {
     // Verify notes empty
     expect(find.text('Empty note list'), findsOneWidget);
     // Tap the FAB to create a note
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
+    // Makes sure keyboard shows up
+    await tester.pump(Duration(milliseconds: 400));
     // Type text
-    await tester.enterText(find.text('Enter your note'), 'Lorem ipsum ...');
+    await tester.enterText(find.byType(TextField), 'Lorem ipsum ...');
     // Save
     await tester.tap(find.byIcon(Icons.done));
     // Check note appear
