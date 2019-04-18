@@ -13,7 +13,7 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         title: const Text('Notes'),
       ),
-      body: _notes.isEmpty ? _emptyNotesBody() : _body(_notes),
+      body: _notes.isEmpty ? _emptyNotesBody() : _body(),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: const Text('Add note'),
@@ -25,6 +25,21 @@ class _HomeState extends State<Home> {
           });
         },
       ),
+    );
+  }
+
+  Column _body() {
+    return Column(
+      children: _notes.map((String note) {
+        return Dismissible(
+          key: UniqueKey(),
+          child: Text(note),
+          onDismissed: (DismissDirection direction) {
+            _notes.remove(note);
+            setState(() {});
+          },
+        );
+      }).toList(),
     );
   }
 }
@@ -53,10 +68,4 @@ Future<String> _pushNote(BuildContext context) async {
 
 Text _emptyNotesBody() {
   return const Text('Empty note list');
-}
-
-Column _body(List<String> notes) {
-  return Column(
-    children: notes.map((String note) => Text(note)).toList(),
-  );
 }
