@@ -5,6 +5,7 @@ A new Flutter project. Goal is to practice TDD and flutter framework. Ideas come
 ## User stories
 
 ### #1 User can add note
-### #2 Use can remove note
+### #2 User can remove note
 ### #3 User can edit note
-### #4 Use can leave app and notes are saved
+### #4 User can press back button without saving editing
+### #4 User can leave app and notes are saved

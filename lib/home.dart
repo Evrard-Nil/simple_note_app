@@ -1,39 +1,75 @@
+import 'dart:async';
+import 'package:rxdart/rxdart.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Home extends StatefulWidget {
   @override
   _HomeState createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
-  final List<String> _notes = <String>[];
+class _HomeState extends State<Home> with WidgetsBindingObserver {
+  BehaviorSubject<List<String>> _notes;
+
+  @override
+  void initState() {
+    SharedPreferences.getInstance().then((SharedPreferences onValue) {
+      _notes.add(onValue.getStringList('simple_notes_app_notes'));
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    SharedPreferences.getInstance().then((SharedPreferences onValue) {
+      onValue.setStringList('simple_notes_app_notes', _notes.stream.value ?? <String>[]);
+    });
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notes'),
       ),
-      body: _notes.isEmpty ? _emptyNotesBody() : _body(),
+      body: StreamBuilder(
+        stream: _notes.stream,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if(snapshot.hasData){
+            return
+          }
+        },
+      ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: const Text('Add note'),
         onPressed: () {
           final Future<String> newNote = _pushNote(context);
           newNote.then((String onValue) {
-            _notes.add(onValue);
-            setState(() {});
+            if (onValue.isNotEmpty) {
+              _notes.add(onValue);
+            }
           });
         },
       ),
     );
   }
 
-  Column _body() {
+  Column _body(List<String>notes) {
     return Column(
-      children: _notes.map((String note) {
+      children: notes.map((String note) {
         return Dismissible(
           key: UniqueKey(),
-          child: Text(note),
+          child: FlatButton(
+            child: Text(note),
+            onPressed: () {
+              _pushNote(context, note).then((String onValue) {
+                _notes.remove(note);
+                _notes.add(onValue);
+              });
+            },
+          ),
           onDismissed: (DismissDirection direction) {
             _notes.remove(note);
             setState(() {});
@@ -44,11 +80,17 @@ class _HomeState extends State<Home> {
   }
 }
 
-Future<String> _pushNote(BuildContext context) async {
+Future<String> _pushNote(BuildContext context, [String note = '']) async {
   return Navigator.of(context).push(MaterialPageRoute<String>(builder: (BuildContext context) {
-    final TextEditingController _controller = TextEditingController();
+    final TextEditingController _controller = TextEditingController(text: note);
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          onPressed: () {
+            Navigator.of(context).pop(note);
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
         title: const Text('New note'),
       ),
       body: TextField(
