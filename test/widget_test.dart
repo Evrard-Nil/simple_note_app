@@ -55,4 +55,30 @@ void main() {
     expect(find.text('Empty note list'), findsOneWidget);
     expect(find.text('Lorem ipsum ...'), findsNothing);
   });
+  testWidgets('Edit note', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(Notes());
+    await tester.pumpAndSettle();
+
+    // Create note first
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.pump(Duration(milliseconds: 400));
+    await tester.enterText(find.byType(TextField), 'Lorem ipsum ...');
+    await tester.tap(find.byIcon(Icons.done));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Empty note list'), findsNothing);
+    expect(find.text('Lorem ipsum ...'), findsOneWidget);
+
+    await tester.tap(find.text('Lorem ipsum ...'));
+    await tester.pumpAndSettle();
+    await tester.pump(Duration(milliseconds: 400));
+    await tester.enterText(find.byType(TextField), 'note edited with this');
+    await tester.tap(find.byIcon(Icons.done));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Empty note list'), findsNothing);
+    expect(find.text('note edited with this'), findsOneWidget);
+  });
 }
