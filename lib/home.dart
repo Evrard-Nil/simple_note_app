@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'package:rxdart/rxdart.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'notes_manager_bloc.dart';
+import 'bloc.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -9,36 +10,21 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
-  BehaviorSubject<List<String>> _notes;
-
-  @override
-  void initState() {
-    SharedPreferences.getInstance().then((SharedPreferences onValue) {
-      _notes.add(onValue.getStringList('simple_notes_app_notes'));
-    });
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    SharedPreferences.getInstance().then((SharedPreferences onValue) {
-      onValue.setStringList('simple_notes_app_notes', _notes.stream.value ?? <String>[]);
-    });
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
+    final NoteManagerBloc bloc = BlocProvider.of<NoteManagerBloc>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notes'),
       ),
-      body: StreamBuilder(
-        stream: _notes.stream,
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          if(snapshot.hasData){
-            return
-          }
+      body: StreamBuilder<List<String>>(
+        stream: bloc.outNotes,
+        builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
+          if (snapshot.hasData && snapshot.data.isNotEmpty) {
+            return _body(snapshot.data, bloc);
+          } else
+            return _emptyNotesBody();
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -48,7 +34,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           final Future<String> newNote = _pushNote(context);
           newNote.then((String onValue) {
             if (onValue.isNotEmpty) {
-              _notes.add(onValue);
+              bloc.inAddNotes.add(onValue);
             }
           });
         },
@@ -56,7 +42,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     );
   }
 
-  Column _body(List<String>notes) {
+  Column _body(List<String> notes, NoteManagerBloc bloc) {
     return Column(
       children: notes.map((String note) {
         return Dismissible(
@@ -65,14 +51,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             child: Text(note),
             onPressed: () {
               _pushNote(context, note).then((String onValue) {
-                _notes.remove(note);
-                _notes.add(onValue);
+                bloc.inRmNotes.add(note);
+                bloc.inAddNotes.add(onValue);
               });
             },
           ),
           onDismissed: (DismissDirection direction) {
-            _notes.remove(note);
-            setState(() {});
+            bloc.inRmNotes.add(note);
           },
         );
       }).toList(),
