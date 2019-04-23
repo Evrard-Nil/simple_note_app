@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:notes_app/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('Add note', (WidgetTester tester) async {
@@ -100,5 +102,28 @@ void main() {
     expect(find.text('Empty note list'), findsNothing);
     expect(find.text('note edited with this'), findsNothing);
     expect(find.text('Lorem ipsum ...'), findsOneWidget);
+  });
+  const MethodChannel('plugins.flutter.io/shared_preferences')
+      .setMockMethodCallHandler((MethodCall methodCall) async {
+    if (methodCall.method == 'getAll') {
+      return <String, dynamic>{}; // set initial values here if desired
+    }
+    return null;
+  });
+  testWidgets('US: App saves note to SharedPreferences', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(Notes());
+    await tester.pumpAndSettle();
+
+    // Create note first
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.pump(Duration(milliseconds: 400));
+    await tester.enterText(find.byType(TextField), 'Lorem ipsum ...');
+    await tester.tap(find.byIcon(Icons.done));
+    await tester.pumpAndSettle();
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    expect(prefs.getStringList('notes'), <String>['Lorem ipsum ...']);
   });
 }

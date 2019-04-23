@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'notes_manager_bloc.dart';
 import 'bloc.dart';
+import 'notes_manager_bloc.dart';
 
 class Home extends StatefulWidget {
   @override

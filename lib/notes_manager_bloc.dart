@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'bloc.dart';
 
-String _notesPreferencesKey = const Key('notes').hashCode.toString();
+String _notesPreferencesKey = 'notes';
 
 class NoteManagerBloc extends BlocBase {
   factory NoteManagerBloc() {
@@ -48,19 +49,16 @@ class NoteManagerBloc extends BlocBase {
   }
 
   void _addNote(String noteToAdd) {
-    _notesController.stream.listen((List<String> onData) {
-      List<String> notes = List<String>.from(onData ?? <String>[]);
-      notes.add(noteToAdd);
-      _notesController.sink.add(notes);
-    });
+    final List<String> actualData = List<String>.from(_notesController.value);
+    actualData.add(noteToAdd);
+    _notesController.sink.add(actualData);
+    ;
   }
 
   void _rmNote(String noteToRm) {
-    _notesController.stream.listen((onData) {
-      List<String> notes = List<String>.from(onData);
-      notes.add(noteToRm);
-      _notesController.sink.add(notes);
-    });
+    final List<String> actualData = List<String>.from(_notesController.value);
+    actualData.remove(noteToRm);
+    _notesController.sink.add(actualData);
   }
 
   void _saveNotes(List<String> notesToSave) {
