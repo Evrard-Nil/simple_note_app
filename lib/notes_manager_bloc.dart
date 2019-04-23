@@ -7,16 +7,10 @@ import 'bloc.dart';
 String _notesPreferencesKey = 'notes';
 
 class NoteManagerBloc extends BlocBase {
-  factory NoteManagerBloc() {
-    return _singleton;
-  }
-
-  NoteManagerBloc._internal() {
+  NoteManagerBloc() {
     _initSavedNotes();
     _initListeners();
   }
-
-  static final NoteManagerBloc _singleton = NoteManagerBloc._internal();
 
   final BehaviorSubject<List<String>> _notesController = BehaviorSubject<List<String>>();
   Stream<List<String>> get outNotes => _notesController.stream;
@@ -52,7 +46,6 @@ class NoteManagerBloc extends BlocBase {
     final List<String> actualData = List<String>.from(_notesController.value);
     actualData.add(noteToAdd);
     _notesController.sink.add(actualData);
-    ;
   }
 
   void _rmNote(String noteToRm) {

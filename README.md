@@ -8,4 +8,5 @@ A new Flutter project. Goal is to practice TDD and flutter framework. Ideas come
 ### #2 User can remove note
 ### #3 User can edit note
 ### #4 User can press back button without saving editing
-### #4 User can leave app and notes are saved
+### #5 App saves note to SharedPref
+### #6 App loads notes from SharedPref

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:rxdart/rxdart.dart';
 
 // Generic Interface for all BLoCs
 abstract class BlocBase {
