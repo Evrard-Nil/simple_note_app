@@ -1,10 +1,11 @@
 import 'dart:async';
 
+import 'package:path/path.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 import 'bloc.dart';
 
-String _notesPreferencesKey = 'notes';
+String dbPath = 'notesdb';
 
 class NoteManagerBloc extends BlocBase {
   NoteManagerBloc() {
@@ -12,14 +13,20 @@ class NoteManagerBloc extends BlocBase {
     _initListeners();
   }
 
-  final BehaviorSubject<List<String>> _notesController = BehaviorSubject<List<String>>();
-  Stream<List<String>> get outNotes => _notesController.stream;
+  final BehaviorSubject<List<Map<String, dynamic>>> _notesController =
+      BehaviorSubject<List<Map<String, dynamic>>>();
+  Stream<List<Map<String, dynamic>>> get outNotes => _notesController.stream;
 
-  final PublishSubject<String> _addNotesController = PublishSubject<String>();
-  Sink<String> get inAddNotes => _addNotesController.sink;
+  final PublishSubject<Map<String, dynamic>> _addNotesController =
+      PublishSubject<Map<String, dynamic>>();
+  Sink<Map<String, dynamic>> get inAddNotes => _addNotesController.sink;
 
-  final PublishSubject<String> _removeNotesController = PublishSubject<String>();
-  Sink<String> get inRmNotes => _removeNotesController.sink;
+  final PublishSubject<Map<String, dynamic>> _removeNotesController =
+      PublishSubject<Map<String, dynamic>>();
+  Sink<Map<String, dynamic>> get inRmNotes => _removeNotesController.sink;
+
+  String path;
+  Database db;
 
   @override
   void dispose() {
@@ -29,34 +36,42 @@ class NoteManagerBloc extends BlocBase {
     _removeNotesController.close();
   }
 
-  void _initSavedNotes() {
-    SharedPreferences.getInstance().then((SharedPreferences preferences) {
-      final List<String> savedNotes = preferences.getStringList(_notesPreferencesKey) ?? <String>[];
-      _notesController.sink.add(savedNotes);
+  Future<void> _initSavedNotes() async {
+    path = join(await getDatabasesPath(), dbPath);
+    db = await openDatabase(path, version: 1,
+        onCreate: (Database db, int version) async {
+      await db
+          .execute('CREATE TABLE Notes (id INTEGER PRIMARY KEY, content TEXT)');
+      _notesController.sink.add(<Map<String, dynamic>>[]);
+    }, onOpen: (Database db) async {
+      final List<Map<String, dynamic>> notes =
+          await db.rawQuery('SELECT * from Notes');
+      _notesController.sink.add(notes);
     });
   }
 
   void _initListeners() {
     _addNotesController.stream.listen(_addNote);
     _removeNotesController.stream.listen(_rmNote);
-    _notesController.stream.listen(_saveNotes);
   }
 
-  void _addNote(String noteToAdd) {
-    final List<String> actualData = List<String>.from(_notesController.value);
+  void _addNote(Map<String, dynamic> noteToAdd) {
+    db.rawInsert(
+        'INSERT INTO Notes(content) VALUES ("' + noteToAdd['content'] + '")');
+    final List<Map<String, dynamic>> actualData =
+        List<Map<String, dynamic>>.from(
+            _notesController.value ?? <Map<String, dynamic>>[]);
     actualData.add(noteToAdd);
     _notesController.sink.add(actualData);
   }
 
-  void _rmNote(String noteToRm) {
-    final List<String> actualData = List<String>.from(_notesController.value);
+  void _rmNote(Map<String, dynamic> noteToRm) {
+    db.rawDelete(
+        'DELETE FROM Notes WHERE content = ?', <String>[noteToRm['content']]);
+    final List<Map<String, dynamic>> actualData =
+        List<Map<String, dynamic>>.from(
+            _notesController.value ?? <Map<String, dynamic>>[]);
     actualData.remove(noteToRm);
     _notesController.sink.add(actualData);
-  }
-
-  void _saveNotes(List<String> notesToSave) {
-    SharedPreferences.getInstance().then((SharedPreferences preferences) {
-      preferences.setStringList(_notesPreferencesKey, notesToSave);
-    });
   }
 }

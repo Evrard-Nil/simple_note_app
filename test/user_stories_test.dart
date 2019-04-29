@@ -1,19 +1,39 @@
+// @Skip('sqflite cannot run on the machine.')
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:notes_app/main.dart';
+import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
+
+const String testDBPath = 'somepath';
 
 void main() {
   group('US testing', () {
-    const MethodChannel('plugins.flutter.io/shared_preferences')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
-      if (methodCall.method == 'getAll') {
-        return <String, dynamic>{}; // set initial values here if desired
-      }
-      return null;
+    Database db;
+    String path;
+
+    setUpAll(() async {
+      path = join(await getDatabasesPath(), testDBPath);
+      db = await openDatabase(path, version: 1,
+          onCreate: (Database db, int version) async {
+        await db.execute(
+            'CREATE TABLE Notes (id INTEGER PRIMARY KEY, content TEXT');
+      });
     });
+    // const MethodChannel('plugins.flutter.io/shared_preferences')
+    //     .setMockMethodCallHandler((MethodCall methodCall) async {
+    //   if (methodCall.method == 'getAll') {
+    //     return <String, dynamic>{}; // set initial values here if desired
+    //   }
+    //   return null;
+    tearDownAll(() async {
+      // Delete the database
+      await deleteDatabase(path);
+    });
+
     testWidgets('US1: Add note', (WidgetTester tester) async {
       // Build our app and trigger a frame.
       await tester.pumpWidget(Notes());
@@ -73,7 +93,8 @@ void main() {
       expect(find.text('Empty note list'), findsNothing);
       expect(find.text('note edited with this'), findsOneWidget);
     });
-    testWidgets('US4: backbutton works on note editing page', (WidgetTester tester) async {
+    testWidgets('US4: backbutton works on note editing page',
+        (WidgetTester tester) async {
       // Build our app and trigger a frame.
       await tester.pumpWidget(Notes());
       await tester.pumpAndSettle();
@@ -92,7 +113,7 @@ void main() {
       expect(find.text('note edited with this'), findsOneWidget);
       expect(find.text('Lorem ipsum ...'), findsNothing);
     });
-    testWidgets('US5: App saves note to SharedPreferences', (WidgetTester tester) async {
+    testWidgets('US5v2: App saves note to SQLite', (WidgetTester tester) async {
       // Build our app and trigger a frame.
       await tester.pumpWidget(Notes());
       await tester.pumpAndSettle();
@@ -103,9 +124,12 @@ void main() {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       expect(prefs.getStringList('notes'), <String>['note edited with this']);
     });
-    testWidgets('US6: App loads notes from SharedPreferences', (WidgetTester tester) async {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setStringList('notes', <String>['Note1', 'Note2']);
+    testWidgets('US6v2: App loads notes from SQLite',
+        (WidgetTester tester) async {
+      await db.transaction((Transaction txn) async {
+        await txn.rawInsert('INSERT INTO Notes(content) VALUES("Note1")');
+        await txn.rawInsert('INSERT INTO Notes(content) VALUES("Note2")');
+      });
       // Build our app and trigger a frame.
       await tester.pumpWidget(Notes());
       await tester.pumpAndSettle();

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
-Future<String> pushNote(BuildContext context, [String note = '']) async {
-  return Navigator.of(context).push(MaterialPageRoute<String>(builder: (BuildContext context) {
-    final TextEditingController _controller = TextEditingController(text: note);
+Future<Map<String, dynamic>> pushNote(BuildContext context,
+    [Map<String, dynamic> note = const <String, dynamic>{}]) async {
+  return Navigator.of(context).push(
+      MaterialPageRoute<Map<String, dynamic>>(builder: (BuildContext context) {
+    final TextEditingController _controller =
+        TextEditingController(text: note['content']);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -21,7 +24,8 @@ Future<String> pushNote(BuildContext context, [String note = '']) async {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.done),
         onPressed: () {
-          Navigator.of(context).pop(_controller.text);
+          Navigator.of(context)
+              .pop(<String, dynamic>{'content': _controller.text});
         },
       ),
     );
