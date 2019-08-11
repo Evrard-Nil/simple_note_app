@@ -1,4 +1,4 @@
-# notes_app
+# Notes app
 
 A new Flutter project. Goal is to practice TDD and flutter framework. Ideas come from this [repo](https://github.com/florinpop17/app-ideas).
 
