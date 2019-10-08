@@ -10,3 +10,4 @@ A new Flutter project. Goal is to practice TDD and flutter framework. Ideas come
 ### #4 User can press back button without saving editing
 ### #5 App saves note to SharedPref
 ### #6 App loads notes from SharedPref
+### #7 Notes are saved and loaded from SQLite database
